@@ -1,7 +1,7 @@
 'use client'
 
 import { useConnect, useConnection, useConnectors, useDisconnect, useSendCalls, useCallsStatus } from 'wagmi'
-import { baseSepolia } from 'wagmi/chains'
+import { base, baseSepolia } from 'wagmi/chains'
 import { zeroAddress } from 'viem'
 import { Attribution } from 'ox/erc8021'
 import { useState } from 'react'
@@ -19,10 +19,12 @@ function App() {
     },
   })
 
-  const [attributionType, setAttributionType] = useState<'none' | 'canonical' | 'custom'>('none')
+  const [selectedChain, setSelectedChain] = useState<'base' | 'baseSepolia'>('baseSepolia')
+  const [attributionType, setAttributionType] = useState<'none' | 'canonical' | 'custom' | 'malformed'>('none')
   const [builderCode, setBuilderCode] = useState('')
   // const [chainId, setChainId] = useState('')
   const [registryAddress, setRegistryAddress] = useState<`0x${string}`>()
+  const [rawSuffix, setRawSuffix] = useState('')
 
   const transactionHash = callsStatus?.receipts?.[0]?.transactionHash
 
@@ -38,10 +40,14 @@ function App() {
         codes: [builderCode],
         codeRegistryAddress: registryAddress
       })
+    } else if (attributionType === 'malformed') {
+      capabilities.dataSuffix = rawSuffix
     }
 
+    const chainId = selectedChain === 'base' ? base.id : baseSepolia.id
+
     sendCalls({
-      chainId: baseSepolia.id,
+      chainId,
       calls: [
         {
           to: zeroAddress,
@@ -94,22 +100,38 @@ function App() {
           <>
             <form style={{ marginBottom: '15px' }}>
               <div style={{ marginBottom: '10px' }}>
+                <label htmlFor="chain" style={{ display: 'block', marginBottom: '5px' }}>
+                  Chain:
+                </label>
+                <select
+                  id="chain"
+                  value={selectedChain}
+                  onChange={(e) => setSelectedChain(e.target.value as 'base' | 'baseSepolia')}
+                  style={{ padding: '5px', minWidth: '200px' }}
+                >
+                  <option value="baseSepolia">Base Sepolia</option>
+                  <option value="base">Base</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '10px' }}>
                 <label htmlFor="attribution-type" style={{ display: 'block', marginBottom: '5px' }}>
                   ERC-8021 Attribution:
                 </label>
                 <select
                   id="attribution-type"
                   value={attributionType}
-                  onChange={(e) => setAttributionType(e.target.value as 'none' | 'canonical' | 'custom')}
+                  onChange={(e) => setAttributionType(e.target.value as 'none' | 'canonical' | 'custom' | 'malformed')}
                   style={{ padding: '5px', minWidth: '200px' }}
                 >
                   <option value="none">None</option>
                   <option value="canonical">Canonical Registry (Schema 0)</option>
                   <option value="custom">Custom Registry (Schema 1)</option>
+                  <option value="malformed">Malformed</option>
                 </select>
               </div>
 
-              {attributionType !== 'none' && (
+              {(attributionType === 'canonical' || attributionType === 'custom') && (
                 <div style={{ marginBottom: '10px' }}>
                   <label htmlFor="builder-code" style={{ display: 'block', marginBottom: '5px' }}>
                     Builder Code:
@@ -146,16 +168,31 @@ function App() {
                       id="registry-address"
                       type="text"
                       value={registryAddress}
-                      onChange={(e) => setRegistryAddress(e.target.value)}
+                      onChange={(e) => setRegistryAddress(e.target.value as `0x${string}`)}
                       style={{ padding: '5px', minWidth: '200px' }}
                     />
                   </div>
                 </>
               )}
+
+              {attributionType === 'malformed' && (
+                <div style={{ marginBottom: '10px' }}>
+                  <label htmlFor="raw-suffix" style={{ display: 'block', marginBottom: '5px' }}>
+                    Raw Suffix:
+                  </label>
+                  <input
+                    id="raw-suffix"
+                    type="text"
+                    value={rawSuffix}
+                    onChange={(e) => setRawSuffix(e.target.value)}
+                    style={{ padding: '5px', minWidth: '200px' }}
+                  />
+                </div>
+              )}
             </form>
 
             <button type="button" onClick={handleSendCalls}>
-              Send 1 Gwei
+              Send Calls
             </button>
           </>
         )}
