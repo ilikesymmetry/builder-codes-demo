@@ -1,7 +1,7 @@
 'use client'
 
 import { useConnect, useConnection, useConnectors, useDisconnect, useSendCalls, useCallsStatus } from 'wagmi'
-import { base, baseSepolia } from 'wagmi/chains'
+import { base, baseSepolia, sepolia } from 'wagmi/chains'
 import { zeroAddress } from 'viem'
 import { Attribution } from 'ox/erc8021'
 import { useState } from 'react'
@@ -19,7 +19,7 @@ function App() {
     },
   })
 
-  const [selectedChain, setSelectedChain] = useState<'base' | 'baseSepolia'>('baseSepolia')
+  const [selectedChain, setSelectedChain] = useState<'base' | 'baseSepolia' | 'sepolia'>('baseSepolia')
   const [attributionType, setAttributionType] = useState<'none' | 'canonical' | 'custom' | 'malformed'>('none')
   const [builderCode, setBuilderCode] = useState('')
   // const [chainId, setChainId] = useState('')
@@ -44,7 +44,7 @@ function App() {
       capabilities.dataSuffix = rawSuffix
     }
 
-    const chainId = selectedChain === 'base' ? base.id : baseSepolia.id
+    const chainId = selectedChain === 'base' ? base.id : selectedChain === 'baseSepolia' ? baseSepolia.id : sepolia.id
 
     sendCalls({
       chainId,
@@ -79,20 +79,22 @@ function App() {
         )}
       </div>
 
-      <div>
-        <h2>Connect</h2>
-        {connectors.map((connector) => (
-          <button
-            key={connector.uid}
-            onClick={() => connect({ connector })}
-            type="button"
-          >
-            {connector.name}
-          </button>
-        ))}
-        <div>{status}</div>
-        <div>{error?.message}</div>
-      </div>
+      {connection.status !== 'connected' && (
+        <div>
+          <h2>Connect</h2>
+          {connectors.map((connector) => (
+            <button
+              key={connector.uid}
+              onClick={() => connect({ connector })}
+              type="button"
+            >
+              {connector.name}
+            </button>
+          ))}
+          <div>{status}</div>
+          <div>{error?.message}</div>
+        </div>
+      )}
 
       <div>
         <h2>Send Calls</h2>
@@ -106,10 +108,11 @@ function App() {
                 <select
                   id="chain"
                   value={selectedChain}
-                  onChange={(e) => setSelectedChain(e.target.value as 'base' | 'baseSepolia')}
+                  onChange={(e) => setSelectedChain(e.target.value as 'base' | 'baseSepolia' | 'sepolia')}
                   style={{ padding: '5px', minWidth: '200px' }}
                 >
                   <option value="baseSepolia">Base Sepolia</option>
+                  <option value="sepolia">Ethereum Sepolia</option>
                   <option value="base">Base</option>
                 </select>
               </div>
@@ -199,7 +202,11 @@ function App() {
         {transactionHash && (
           <div style={{ marginTop: '10px' }}>
             <a
-              href={`https://${selectedChain === 'base' ? '' : 'sepolia.'}basescan.org/tx/${transactionHash}`}
+              href={
+                selectedChain === 'sepolia'
+                  ? `https://sepolia.etherscan.io/tx/${transactionHash}`
+                  : `https://${selectedChain === 'base' ? '' : 'sepolia.'}basescan.org/tx/${transactionHash}`
+              }
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -1,10 +1,10 @@
 import { cookieStorage, createConfig, createStorage, http } from "wagmi";
-import { base, baseSepolia } from "wagmi/chains";
+import { base, baseSepolia, sepolia } from "wagmi/chains";
 import { baseAccount } from "wagmi/connectors";
 
 export function getConfig() {
   return createConfig({
-    chains: [base, baseSepolia],
+    chains: [base, baseSepolia, sepolia],
     storage: createStorage({
       storage: cookieStorage,
     }),
@@ -12,6 +12,7 @@ export function getConfig() {
     transports: {
       [base.id]: http(),
       [baseSepolia.id]: http(),
+      [sepolia.id]: http(),
     },
     connectors: [
       baseAccount({
