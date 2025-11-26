@@ -15,7 +15,7 @@ export function getConfig() {
     },
     connectors: [
       baseAccount({
-        preference: { walletUrl: "http://localhost:3005/connect" },
+        // preference: { walletUrl: "http://localhost:3005/connect" },
       }),
     ],
   });
