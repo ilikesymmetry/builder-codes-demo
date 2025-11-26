@@ -1,8 +1,8 @@
 'use client'
 
-import { useConnect, useConnection, useConnectors, useDisconnect, useSendCalls, useCallsStatus } from 'wagmi'
+import { useConnect, useConnection, useConnectors, useDisconnect, useSendCalls, useCallsStatus, useCapabilities } from 'wagmi'
 import { base, baseSepolia, sepolia } from 'wagmi/chains'
-import { zeroAddress } from 'viem'
+import { zeroAddress, encodeFunctionData } from 'viem'
 import { Attribution } from 'ox/erc8021'
 import { useState } from 'react'
 
@@ -18,6 +18,9 @@ function App() {
       enabled: !!sendCallsId,
     },
   })
+
+  const { data: capabilities } = useCapabilities()
+  console.log('capabilities:', capabilities)
 
   const [selectedChain, setSelectedChain] = useState<'base' | 'baseSepolia' | 'sepolia'>('baseSepolia')
   const [attributionType, setAttributionType] = useState<'none' | 'canonical' | 'custom' | 'malformed'>('none')
@@ -52,6 +55,63 @@ function App() {
         {
           to: zeroAddress,
           data: '0x',
+          value: BigInt(0),
+        },
+      ],
+      ...(attributionType !== 'none' && { capabilities })
+    })
+  }
+
+  const handleBasePay = () => {
+    const capabilities: any = {}
+    
+    if (attributionType === 'canonical') {
+      capabilities.dataSuffix = Attribution.toDataSuffix({
+        codes: [builderCode]
+      })
+    } else if (attributionType === 'custom') {
+      capabilities.dataSuffix = Attribution.toDataSuffix({
+        codes: [builderCode],
+        codeRegistryAddress: registryAddress
+      })
+    } else if (attributionType === 'malformed') {
+      capabilities.dataSuffix = rawSuffix
+    }
+
+    const chainId = selectedChain === 'base' ? base.id : selectedChain === 'baseSepolia' ? baseSepolia.id : sepolia.id
+    const accountAddress = connection.addresses?.[0]
+
+    if (!accountAddress) return
+
+    // Determine token address based on chain
+    const tokenAddress = selectedChain === 'base' 
+      ? '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+      : selectedChain === 'baseSepolia'
+      ? '0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+      : '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+
+    // Encode ERC20 transfer function call: transfer(address to, uint256 amount)
+    const data = encodeFunctionData({
+      abi: [{
+        name: 'transfer',
+        type: 'function',
+        stateMutability: 'nonpayable',
+        inputs: [
+          { name: 'to', type: 'address' },
+          { name: 'amount', type: 'uint256' }
+        ],
+        outputs: [{ type: 'bool' }]
+      }],
+      functionName: 'transfer',
+      args: [accountAddress, BigInt(1e4)]
+    })
+
+    sendCalls({
+      chainId,
+      calls: [
+        {
+          to: tokenAddress,
+          data,
           value: BigInt(0),
         },
       ],
@@ -194,9 +254,14 @@ function App() {
               )}
             </form>
 
-            <button type="button" onClick={handleSendCalls}>
-              Send Calls
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={handleSendCalls}>
+                Send Calls
+              </button>
+              <button type="button" onClick={handleBasePay}>
+                Base Pay
+              </button>
+            </div>
           </>
         )}
         {transactionHash && (
