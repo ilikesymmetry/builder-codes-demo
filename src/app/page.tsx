@@ -199,7 +199,7 @@ function App() {
         {transactionHash && (
           <div style={{ marginTop: '10px' }}>
             <a
-              href={`https://sepolia.basescan.org/tx/${transactionHash}`}
+              href={`https://${selectedChain === 'base' ? '' : 'sepolia.'}basescan.org/tx/${transactionHash}`}
               target="_blank"
               rel="noopener noreferrer"
             >
