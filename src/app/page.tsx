@@ -142,13 +142,13 @@ function App() {
       {connection.status !== 'connected' && (
         <div>
           <h2>Connect</h2>
-          {connectors.map((connector) => (
+          {connectors.map((connector, index) => (
             <button
               key={connector.uid}
               onClick={() => connect({ connector })}
               type="button"
             >
-              {connector.name}
+              {connector.name} {connector.name === 'Base Account' && index == 0 ? "(local)" : connector.name === 'Base Account' && index == 1 ? "(beta)" : connector.name === 'Base Account' && index == 2 ? "(dev)" : ''}
             </button>
           ))}
           <div>{status}</div>

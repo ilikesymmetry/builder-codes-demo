@@ -16,8 +16,15 @@ export function getConfig() {
     },
     connectors: [
       baseAccount({
-        // preference: { walletUrl: "http://localhost:3005/connect" },
+        preference: { walletUrl: "http://localhost:3005/connect" },
       }),
+      baseAccount({
+        preference: { walletUrl: "https://keys-beta.coinbase.com/connect" },
+      }),
+      baseAccount({
+        preference: { walletUrl: "https://keys-dev.coinbase.com/connect" },
+      }),
+      baseAccount(),
     ],
   });
 }
