@@ -28,6 +28,8 @@ function App() {
   // const [chainId, setChainId] = useState('')
   const [registryAddress, setRegistryAddress] = useState<`0x${string}`>()
   const [rawSuffix, setRawSuffix] = useState('')
+  const [parseSuffixInput, setParseSuffixInput] = useState('')
+  const [parsedAttribution, setParsedAttribution] = useState<Attribution.Attribution | undefined | null>(null)
 
   const transactionHash = callsStatus?.receipts?.[0]?.transactionHash
 
@@ -277,6 +279,49 @@ function App() {
             >
               View Transaction
             </a>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h2>Data Suffix Parsing</h2>
+        <form style={{ marginBottom: '15px' }}>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="parse-suffix" style={{ display: 'block', marginBottom: '5px' }}>
+              Data Suffix:
+            </label>
+            <input
+              id="parse-suffix"
+              type="text"
+              value={parseSuffixInput}
+              onChange={(e) => setParseSuffixInput(e.target.value)}
+              placeholder="0x..."
+              style={{ padding: '5px', minWidth: '300px' }}
+            />
+          </div>
+        </form>
+        <button
+          type="button"
+          onClick={() => {
+            const result = Attribution.fromData(parseSuffixInput as `0x${string}`)
+            setParsedAttribution(result)
+          }}
+        >
+          Parse Data Suffix
+        </button>
+        {parsedAttribution !== null && (
+          <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#2a2a2a', borderRadius: '4px' }}>
+            {parsedAttribution === undefined ? (
+              <div style={{ color: '#999', marginTop: '5px' }}>No valid attribution found</div>
+            ) : (
+              <div style={{ marginTop: '5px' }}>
+                <div><strong>Schema ID:</strong> {parsedAttribution.id ?? 0}</div>
+                <div><strong>Codes:</strong> {parsedAttribution.codes.join(', ')}</div>
+                {'codeRegistryAddress' in parsedAttribution && (
+                  <div><strong>Registry Address:</strong> {parsedAttribution.codeRegistryAddress}</div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
