@@ -11,7 +11,7 @@
   "dependencies": {
     "@base-org/account": "^2.5.0",
     "@tanstack/react-query": "latest",
-    "next": "latest",
+    "next": "16.0.10",
     "ox": "^0.9.17",
     "react": "latest",
     "react-dom": "latest",
